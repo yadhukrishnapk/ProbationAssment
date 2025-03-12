@@ -6,8 +6,6 @@ const PriceRangeSlider = ({ minPrice, maxPrice }) => {
 
   const safeMinPrice = minPrice ?? 0;
   const safeMaxPrice = maxPrice ?? 10000;
-
-  // Track min/max values based on API response & URL params
   const [priceRange, setPriceRange] = useState({ min: safeMinPrice, max: safeMaxPrice });
   const [currentRange, setCurrentRange] = useState({
     min: parseInt(searchParams.get("min_price")) || safeMinPrice,
@@ -33,14 +31,11 @@ const PriceRangeSlider = ({ minPrice, maxPrice }) => {
 
     debounceTimeoutRef.current = setTimeout(() => {
       const newSearchParams = new URLSearchParams(searchParams);
-      
-      // Update min_price and max_price parameters
-      newSearchParams.set("min_price", newRange.min.toString());
+        newSearchParams.set("min_price", newRange.min.toString());
       newSearchParams.set("max_price", newRange.max.toString());
       
-      // Preserve the current page parameter if it exists
       if (searchParams.has("page")) {
-        newSearchParams.set("page", "1"); // Reset to page 1 when filter changes
+        newSearchParams.set("page", "1"); 
       }
       
       setSearchParams(newSearchParams, { replace: true });

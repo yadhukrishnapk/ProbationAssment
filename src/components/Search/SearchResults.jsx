@@ -7,7 +7,7 @@ const SearchResults = ({ query, showFilters }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [sortOption, setSortOption] = useState("relevance");
-  const [selectedIndex, setSelectedIndex] = useState("qa-en"); // Default to English
+  const [selectedIndex, setSelectedIndex] = useState("qa-en"); 
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -19,10 +19,8 @@ const SearchResults = ({ query, showFilters }) => {
     setSelectedIndex(newIndex);
   };
 
-  // Get current page from URL or default to 1
   const currentPage = parseInt(searchParams.get("page")) || 1;
 
-  // Get filter parameters from URL
   const getFilterParams = () => {
     const filterParams = {};
     for (const [key, value] of searchParams.entries()) {
@@ -46,7 +44,6 @@ const SearchResults = ({ query, showFilters }) => {
   const filterParams = getFilterParams();
   const { data, isLoading, error } = useSearchFetch(query, filterParams);
 
-  // Sorting logic
   const sortedData = data
     ? [...data].sort((a, b) => {
         if (sortOption === "low-to-high") {
@@ -55,11 +52,10 @@ const SearchResults = ({ query, showFilters }) => {
         if (sortOption === "high-to-low") {
           return b.sale_price - a.sale_price;
         }
-        return 0; // Default is relevance (no sorting)
+        return 0; 
       })
     : [];
 
-  // Pagination Logic
   const totalItems = sortedData?.length || 0;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedData = sortedData?.slice(
@@ -69,33 +65,21 @@ const SearchResults = ({ query, showFilters }) => {
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
-      // Create a new URLSearchParams object with all current parameters
       const updatedParams = new URLSearchParams(searchParams);
+            updatedParams.set("page", page.toString());
       
-      // Update only the page parameter
-      updatedParams.set("page", page.toString());
-      
-      // Apply the updated params
       setSearchParams(updatedParams);
     }
   };
 
-  // Handle Search Input Change
   const [searchValue, setSearchValue] = useState(query);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchValue.trim()) {
-      // Create a new URLSearchParams object with all current parameters
       const updatedParams = new URLSearchParams(searchParams);
-      
-      // Update the query parameter
       updatedParams.set("query", searchValue);
-      
-      // Reset page to 1 for new search
       updatedParams.set("page", "1");
-      
-      // Apply the updated params
       setSearchParams(updatedParams);
     }
   };
@@ -186,7 +170,6 @@ const SearchResults = ({ query, showFilters }) => {
             ))}
           </div>
 
-          {/* Pagination Controls */}
           <div className="flex justify-center mt-6 space-x-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
@@ -196,7 +179,6 @@ const SearchResults = ({ query, showFilters }) => {
               Prev
             </button>
             {totalPages <= 7 ? (
-              // Show all pages if there are 7 or fewer
               [...Array(totalPages)].map((_, index) => (
                 <button
                   key={index}
@@ -209,9 +191,7 @@ const SearchResults = ({ query, showFilters }) => {
                 </button>
               ))
             ) : (
-              // Show limited pages with ellipsis for many pages
               <>
-                {/* First page */}
                 <button
                   onClick={() => handlePageChange(1)}
                   className={`px-4 py-2 rounded ${
@@ -221,10 +201,8 @@ const SearchResults = ({ query, showFilters }) => {
                   1
                 </button>
                 
-                {/* Ellipsis or page numbers */}
                 {currentPage > 3 && <span className="px-2 self-center">...</span>}
                 
-                {/* Pages around current page */}
                 {[...Array(totalPages)].map((_, index) => {
                   const pageNum = index + 1;
                   if (
@@ -246,10 +224,8 @@ const SearchResults = ({ query, showFilters }) => {
                   return null;
                 })}
                 
-                {/* Ellipsis or page numbers */}
                 {currentPage < totalPages - 2 && <span className="px-2 self-center">...</span>}
                 
-                {/* Last page */}
                 <button
                   onClick={() => handlePageChange(totalPages)}
                   className={`px-4 py-2 rounded ${
@@ -271,7 +247,6 @@ const SearchResults = ({ query, showFilters }) => {
         </>
       )}
 
-      {/* Not Found UI with Go Back Button */}
       {!isLoading && !error && totalItems === 0 && (
         <div className="text-center">
           <p className="text-gray-500">No results found for "{query}".</p>

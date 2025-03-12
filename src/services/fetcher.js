@@ -1,15 +1,14 @@
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL 
 export const axiosInstance = axios.create({
-  baseURL: "https://uat.search-assist.webc.in/api",
+  baseURL: BASE_URL,
   headers: {
     "Client-id": "7645129791",  // Default (qa-en)
     "Secret-key": "Qfj1UUkFItWfVFwWpJ65g0VfhjdVGN",
     "Content-Type": "application/json",
   },
 });
-
-// Function to update headers dynamically
 export const updateHeaders = (indexName) => {
   const headers = {
     "qa-en": {

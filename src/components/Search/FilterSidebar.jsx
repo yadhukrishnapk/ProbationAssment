@@ -26,8 +26,6 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
     }
     return filterParams;
   };
-
-  // Only fetch the filters data
   const { filters } = useSearchFetch(query, getFilterParams());
 
   const toggleFilter = (attribute, value) => {
@@ -35,7 +33,6 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
     const currentValues = searchParams.getAll(attribute);
 
     if (currentValues.includes(value)) {
-      // Remove the value if it's already there
       newSearchParams.delete(attribute);
       currentValues.forEach((val) => {
         if (val !== value) {
@@ -43,14 +40,11 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
         }
       });
     } else {
-      // Add the value if it's not there
       newSearchParams.append(attribute, value);
     }
 
-    // Reset to page 1 when filter changes
     newSearchParams.set("page", "1");
     
-    // Use replace: true to update the URL without navigation
     setSearchParams(newSearchParams, { replace: true });
   };
 
@@ -59,10 +53,8 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
     return currentValues.includes(value);
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     const newSearchParams = new URLSearchParams();
-    // Preserve only the search query
     if (query) {
       newSearchParams.set("query", query);
     }
@@ -70,12 +62,10 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
     setSearchParams(newSearchParams, { replace: true });
   };
 
-  // Find the price filter from the filters list
   const priceFilter = filters?.find((filter) => filter.attribute === "price");
   const minPrice = priceFilter?.options?.min_price;
   const maxPrice = priceFilter?.options?.max_price;
 
-  // Count active filters
   const getActiveFilterCount = () => {
     let count = 0;
     for (const [key, value] of searchParams.entries()) {
