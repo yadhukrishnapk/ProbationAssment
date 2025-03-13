@@ -2,13 +2,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSearchFetch } from "../../services/queries";
 import { useState, useEffect } from "react";
 import { updateHeaders } from "../../services/fetcher";
+import usePagination from "../../hooks/usePagination";
+import usePaginationUI from "../../hooks/usePaginationUI";
 
 const SearchResults = ({ query, showFilters }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [sortOption, setSortOption] = useState("relevance");
   const [selectedIndex, setSelectedIndex] = useState("qa-en"); 
-  const itemsPerPage = 6;
+  const [searchValue, setSearchValue] = useState(query);
 
   useEffect(() => {
     updateHeaders(selectedIndex);
@@ -18,8 +20,6 @@ const SearchResults = ({ query, showFilters }) => {
     const newIndex = e.target.value;
     setSelectedIndex(newIndex);
   };
-
-  const currentPage = parseInt(searchParams.get("page")) || 1;
 
   const getFilterParams = () => {
     const filterParams = {};
@@ -57,22 +57,11 @@ const SearchResults = ({ query, showFilters }) => {
     : [];
 
   const totalItems = sortedData?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedData = sortedData?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      const updatedParams = new URLSearchParams(searchParams);
-            updatedParams.set("page", page.toString());
-      
-      setSearchParams(updatedParams);
-    }
-  };
-
-  const [searchValue, setSearchValue] = useState(query);
+  
+  const { currentPage, totalPages, handlePageChange, getPaginatedData } = usePagination(totalItems);
+  const paginatedData = getPaginatedData(sortedData);
+  
+  const { renderPagination } = usePaginationUI(currentPage, totalPages, handlePageChange);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -86,7 +75,6 @@ const SearchResults = ({ query, showFilters }) => {
 
   return (
     <div className={`flex-1 p-4 ${showFilters ? 'ml-0' : 'ml-0'}`}>
-      {/* Search Bar */}
       <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 mb-4">
         <input
           type="text"
@@ -105,12 +93,10 @@ const SearchResults = ({ query, showFilters }) => {
 
       <h1 className="text-xl font-bold mb-4">Search Results for "{query}"</h1>
 
-      {/* Sorting & Index Dropdown */}
       <div className="flex justify-between items-center mb-4">
         <p className="text-gray-600">Showing {totalItems} results</p>
 
         <div className="flex space-x-4">
-          {/* Sorting Dropdown */}
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
@@ -121,7 +107,6 @@ const SearchResults = ({ query, showFilters }) => {
             <option value="high-to-low">Price: High to Low</option>
           </select>
 
-          {/* Index Switching Dropdown */}
           <select
             value={selectedIndex}
             onChange={handleIndexChange}
@@ -170,80 +155,7 @@ const SearchResults = ({ query, showFilters }) => {
             ))}
           </div>
 
-          <div className="flex justify-center mt-6 space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            {totalPages <= 7 ? (
-              [...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`px-4 py-2 rounded ${
-                    currentPage === index + 1 ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-700"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))
-            ) : (
-              <>
-                <button
-                  onClick={() => handlePageChange(1)}
-                  className={`px-4 py-2 rounded ${
-                    currentPage === 1 ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-700"
-                  }`}
-                >
-                  1
-                </button>
-                
-                {currentPage > 3 && <span className="px-2 self-center">...</span>}
-                
-                {[...Array(totalPages)].map((_, index) => {
-                  const pageNum = index + 1;
-                  if (
-                    (pageNum !== 1 && pageNum !== totalPages) && 
-                    (pageNum === currentPage - 1 || pageNum === currentPage || pageNum === currentPage + 1)
-                  ) {
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-4 py-2 rounded ${
-                          currentPage === pageNum ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  }
-                  return null;
-                })}
-                
-                {currentPage < totalPages - 2 && <span className="px-2 self-center">...</span>}
-                
-                <button
-                  onClick={() => handlePageChange(totalPages)}
-                  className={`px-4 py-2 rounded ${
-                    currentPage === totalPages ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-700"
-                  }`}
-                >
-                  {totalPages}
-                </button>
-              </>
-            )}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+          {renderPagination()}
         </>
       )}
 
