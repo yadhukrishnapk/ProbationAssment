@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSearchFetch } from "../../services/queries";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { updateHeaders } from "../../services/fetcher";
 import usePagination from "../../hooks/usePagination";
 import usePaginationUI from "../../hooks/usePaginationUI";
@@ -11,15 +11,8 @@ const SearchResults = ({ query, showFilters }) => {
   const [sortOption, setSortOption] = useState("relevance");
   const [selectedIndex, setSelectedIndex] = useState("qa-en"); 
   const [searchValue, setSearchValue] = useState(query);
-
-  useEffect(() => {
-    updateHeaders(selectedIndex);
-  }, [selectedIndex]);
-
-  const handleIndexChange = (e) => {
-    const newIndex = e.target.value;
-    setSelectedIndex(newIndex);
-  };
+  const [previousData, setPreviousData] = useState(null);
+  const [isIndexChanging, setIsIndexChanging] = useState(false);
 
   const getFilterParams = () => {
     const filterParams = {};
@@ -43,9 +36,36 @@ const SearchResults = ({ query, showFilters }) => {
 
   const filterParams = getFilterParams();
   const { data, isLoading, error } = useSearchFetch(query, filterParams);
+  
+  const displayData = (isLoading || isIndexChanging) && previousData ? previousData : data;
+  
+  if (data && !isLoading && JSON.stringify(data) !== JSON.stringify(previousData)) {
+    setPreviousData(data);
+    if (isIndexChanging) {
+      setIsIndexChanging(false);
+    }
+  }
 
-  const sortedData = data
-    ? [...data].sort((a, b) => {
+  const handleIndexChange = (e) => {
+    const newIndex = e.target.value;
+    setSelectedIndex(newIndex);
+    setIsIndexChanging(true);
+    
+    updateHeaders(newIndex);
+    
+    const indexLoadingIndicator = document.getElementById('index-loading-indicator');
+    if (indexLoadingIndicator) {
+      indexLoadingIndicator.classList.remove('hidden');
+      setTimeout(() => {
+        if (indexLoadingIndicator) {
+          indexLoadingIndicator.classList.add('hidden');
+        }
+      }, 2000); 
+    }
+  };
+
+  const sortedData = displayData
+    ? [...displayData].sort((a, b) => {
         if (sortOption === "low-to-high") {
           return a.sale_price - b.sale_price;
         }
@@ -94,9 +114,15 @@ const SearchResults = ({ query, showFilters }) => {
       <h1 className="text-xl font-bold mb-4">Search Results for "{query}"</h1>
 
       <div className="flex justify-between items-center mb-4">
-        <p className="text-gray-600">Showing {totalItems} results</p>
+        <p className="text-gray-600">
+          {isLoading || isIndexChanging ? (
+            <span>Loading results...</span>
+          ) : (
+            <span>Showing {totalItems} results</span>
+          )}
+        </p>
 
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 items-center">
           <select
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
@@ -107,23 +133,31 @@ const SearchResults = ({ query, showFilters }) => {
             <option value="high-to-low">Price: High to Low</option>
           </select>
 
-          <select
-            value={selectedIndex}
-            onChange={handleIndexChange}
-            className="border p-2 rounded-md"
-          >
-            <option value="qa-en">English Index (qa-en)</option>
-            <option value="qa-ar">Arabic Index (qa-ar)</option>
-          </select>
+          <div className="relative">
+            <select
+              value={selectedIndex}
+              onChange={handleIndexChange}
+              className="border p-2 rounded-md"
+              disabled={isLoading || isIndexChanging}
+            >
+              <option value="qa-en">English Index (qa-en)</option>
+              <option value="qa-ar">Arabic Index (qa-ar)</option>
+            </select>
+            {isIndexChanging && (
+              <span id="index-loading-indicator" className="absolute -right-6 top-2">
+                <div className="w-4 h-4 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {isLoading && <p>Loading...</p>}
+      {isLoading && !previousData && !isIndexChanging && <p>Loading...</p>}
       {error && <p className="text-red-500">Failed to fetch search results</p>}
 
-      {!isLoading && !error && totalItems > 0 && (
+      {displayData && totalItems > 0 && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${(isLoading || isIndexChanging) ? 'opacity-60' : ''}`}>
             {paginatedData.map((item) => (
               <div
                 key={item.id}
@@ -159,7 +193,7 @@ const SearchResults = ({ query, showFilters }) => {
         </>
       )}
 
-      {!isLoading && !error && totalItems === 0 && (
+      {!isLoading && !isIndexChanging && !error && totalItems === 0 && (
         <div className="text-center">
           <p className="text-gray-500">No results found for "{query}".</p>
           <button
@@ -168,6 +202,14 @@ const SearchResults = ({ query, showFilters }) => {
           >
             Go Back
           </button>
+        </div>
+      )}
+      
+      {(isLoading || isIndexChanging) && (
+        <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          </div>
         </div>
       )}
     </div>

@@ -43,6 +43,7 @@ export function useSearchFetch(query, filters = {}) {
     {
       revalidateOnFocus: false,
       revalidateOnMount: true,
+      keepPreviousData: true,
       dedupingInterval: 0,
     }
   );

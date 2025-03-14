@@ -121,7 +121,12 @@ const FiltersSidebar = ({ showFilters, setShowFilters }) => {
       {/* Other filters */}
       {filters &&
         filters
-          .filter((filter) => filter.attribute !== "price")
+          .filter((filter) => 
+            filter.attribute !== "price" && 
+          filter.attribute !== "product_type" && 
+          filter.attribute !== "type" &&
+          filter.attribute !== "model_name"
+          )
           .map((filter) => (
             <div key={filter.attribute} className="mb-6 pb-6 border-b border-gray-200 last:border-b-0">
               <h3 className="font-semibold text-gray-700 mb-3">{filter.label}</h3>
